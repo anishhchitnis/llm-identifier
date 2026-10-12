@@ -1,0 +1,6 @@
+model,C,val_acc,val_macro_f1,test_acc,test_macro_f1
+majority_class,,0.2019,0.0672,0.1823,0.0617
+tfidf_word_output,10.0,0.7403,0.7426,0.7716,0.7733
+tfidf_char_output,10.0,0.7577,0.7604,0.767,0.7691
+tfidf_word_input_only,1.0,0.2505,0.2472,0.2325,0.2257
+tfidf_word_input_plus_output,10.0,0.7004,0.7017,0.7204,0.7215

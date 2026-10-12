@@ -1,0 +1,5 @@
+bard: ¶ ¶ | ¶ * | * | is a | ¶ The | . ¶ | The | Sure | also | * * | ¶ | are
+falcon: ? | assistant | ¶ - | and | Assistant | to | < / | you | user | < | ¶ Assistant | s >
+gpt: like | various | ¶ - | ¶ ¶ | an | : | within | ¶ Confidence | might | Now | : 95 | In
+llama2: ! | to help | ! I | I ' | help ! | respectful | happy to | , I | ! Here | happy | ¶ * | question
+mpt: ¶ | ¶ Overall | Certainly | : | Overall | Overall , | Certainly ! | a specific | * ` | False ¶ | ` ¶ | Answer
