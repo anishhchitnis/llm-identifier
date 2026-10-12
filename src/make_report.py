@@ -122,7 +122,7 @@ story.append(p(
     "families, GPT, Llama 2, Bard, Falcon and MPT. When the models only see the answer, they get about "
     "0.74 (CNN) and 0.71 (BiLSTM) macro-F1, and random guessing would get 0.20. A simple TF-IDF and "
     "logistic regression baseline did a little better, at 0.77. When the models only see the prompt, they stay "
-    "close to chance at 0.22. Adding the prompt to the answer did not help. I also tested the models on a domain they never saw in training. The score drops a little for three of the four domains and a lot for Flan. The score for the prompt only models is a "
+    "close to chance at 0.22. Adding the prompt to the answer did not help. I also tested the models on a domain they never saw in training. The score drops a little for three of the four domains and a lot for Flan. For RQ4 I removed one kind of signal at a time. No single removal broke the classifier, so the signals are spread over word choice, formatting, length and the first and last sentences. The score for the prompt only models is a "
     "little above chance, and I found out this comes from a quirk in the data and not from a real fingerprint in the prompt."
 ))
 
@@ -131,12 +131,13 @@ story.append(Paragraph("1.1 The problem", h2))
 story.append(p(
     "LLMs write text that sounds a lot alike, so it is hard to tell by reading who wrote it. In this project the model "
     "gets a text and has to say which LLM family wrote it. That makes it a 5 class classification problem. "
-    "I worked on three research questions."
+    "I worked on four research questions."
 ))
 story.extend(bl([
     "<b>RQ1.</b> Can we identify the LLM family from the output text alone?",
     "<b>RQ2.</b> How does the result change if the model sees only the input (the prompt), only the output, or both?",
     "<b>RQ3.</b> Do the fingerprints carry over to a type of task the model never saw in training?",
+    "<b>RQ4.</b> What features of the text tell the LLMs apart, such as length, formatting and vocabulary?",
 ]))
 
 story.append(Paragraph("1.2 Where the data comes from", h2))
@@ -376,6 +377,57 @@ story.append(p(
     "I did not measure the answer length by domain, so this is a guess and not something I proved."
 ))
 
+story.append(Paragraph("4.6 RQ4, what tells the LLMs apart?", h2))
+story.append(p(
+    "Accuracy only says that the families can be told apart. Here I look at why. I did two things. First I measured simple "
+    "features of the answers for each family. Second I removed one kind of signal at a time and checked how much the score fell. "
+    "These tests use the TF IDF and logistic regression model and a gradient boosted tree model on the features. I did not rerun the "
+    "CNN and BiLSTM for them."
+))
+fm = pd.read_csv(RESULTS / "rq4_feature_means_only.csv", index_col=0)
+show = [
+    ("words", "Words per answer", "{:.0f}"),
+    ("sentences", "Sentences per answer", "{:.1f}"),
+    ("newlines", "Line breaks per answer", "{:.1f}"),
+    ("bullets", "Bullet or number lines", "{:.1f}"),
+    ("bold_markers", "Bold markers (**) per answer", "{:.2f}"),
+    ("ttr_first100", "Share of different words in first 100", "{:.2f}"),
+    ("exclaim_per_word", "Exclamation marks per word", "{:.3f}"),
+    ("question_per_word", "Question marks per word", "{:.3f}"),
+    ("starts_with_sure", "Starts with Sure, Certainly, Of, As or I", "{:.2f}"),
+]
+rows = [["Feature", "Bard", "Falcon", "GPT", "Llama 2", "MPT"]]
+for col, label, fmt in show:
+    rows.append([label] + [fmt.format(fm.loc[f, col]) for f in ["bard", "falcon", "gpt", "llama2", "mpt"]])
+story.append(table(rows, [2.4, 0.8, 0.8, 0.8, 0.8, 0.8], "Table 11. Average of some simple features for each family on the training data."))
+story.append(p(
+    "The families differ in clear ways. Falcon answers are short, with 106 words on average against 270 for Bard and 268 for Llama 2, and they have few line breaks and "
+    "few bullets. Bard uses far more bold markers, about 2.9 per answer while the others use 0.02 to 0.34. Llama 2 uses the most exclamation marks, "
+    "and 41 percent of its answers start with an opener like Sure. Falcon asks the most questions and has the most different words in its first 100 words, "
+    "which fits its short answers. GPT uses more commas, colons and code marks than the others."
+))
+rows = [["Features used", "Macro F1"]]
+ab = pd.read_csv(RESULTS / "rq4_ablation.csv")
+st = ab[ab["kind"] == "structure"].set_index("setting")["test_macro_f1"]
+for k in ["all structure features", "only length", "only layout", "only punctuation", "only diversity", "only voice", "all except length", "all except layout", "all except punctuation", "all except diversity", "all except voice"]:
+    rows.append([k.replace("only ", "Only ").replace("all except ", "All except ").replace("all structure features", "All structure features"), f3(st[k])])
+story.append(table(rows, [3.6, 1.4], "Table 12. A tree model that sees only counts like length, layout, punctuation, diversity and voice, never the words themselves."))
+story.append(fig("fig_rq4_ablation.png", "Figure 10. TF IDF and logistic regression after removing or keeping one kind of signal. The top bar is the full text."))
+story.append(p(
+    "<b>What signals does the classifier use, and are they linguistic or structural?</b> Both. A tree model that only sees counts of length, layout, "
+    "punctuation, diversity and voice gets 0.641 macro F1 without ever seeing a word. The length group alone gets 0.445, layout alone 0.461 and punctuation alone 0.464. "
+    "Diversity alone gets 0.326 and voice alone only 0.227, so those two are weak. On the word side, keeping the words but removing all formatting still gets 0.712. "
+    "Keeping only the formatting and hiding every word gets 0.594. Function words only (like the, to and you) get 0.585 and content words only get 0.644. "
+    "Each kind of signal carries a lot by itself, and all of them together give the best score of 0.772."
+))
+story.append(p(
+    "<b>Does removing some signals reduce the performance a lot?</b> Not by itself. Removing the formatting costs 6 points, from 0.772 to 0.712. "
+    "Removing the word pairs and keeping single words costs 7 points. Removing the first sentence costs 5 points and the last sentence costs 6 points. "
+    "Removing both the first and last sentence costs 10 points, to 0.676. In the tree model, removing one feature group at a time moves the score "
+    "between 0.589 and 0.646, and removing the diversity group even helps a little. So no single signal is the whole story. The information is spread out and many of the signals overlap, "
+    "which is why taking one away does not break the classifier. The first 20 words alone already give 0.596, which matches the truncation result in 4.1."
+))
+
 story.append(Paragraph("5. Limits of this work", h1))
 story.extend(bl([
     "All text comes from one dataset, UltraFeedback. The results may not hold for other prompts or for newer models.",
@@ -384,6 +436,8 @@ story.extend(bl([
     "In UltraFeedback each prompt gets four of the 17 models, so not every family answered every prompt.",
     "Bard has fewer rows than the other families because of how much Bard data exists in the source.",
     "I used 3 seeds, so the standard deviations are rough. I did not do a heavy search for hyperparameters.",
+    "The RQ4 tests use a linear model and a tree model, not the CNN and BiLSTM, and each setting was run once with a fixed regularization strength. "
+    "They show which signals carry information, but they do not prove that the neural networks use the same signals.",
     "For RQ3, the held out models trained on about three quarters of the data, and the BiLSTM used only 2 seeds. "
     "The four domains are also not fully separate tasks. They are different sources of prompts, and some of them mix several kinds of tasks.",
 ]))
@@ -413,8 +467,7 @@ story.append(p(
 ))
 story.append(p(
     "The held out domain test also taught me something. A model that scores 0.74 on average can fall to 0.53 on one domain, so one average score hides a lot. "
-    "On the practical side, next time I will save and download result files after every step. If I had more time, I would "
-    "test the models on a family that was not in training, and look at the wrong predictions one by one to see what the MPT answers "
+    "Something I would like to try next is testing the models on a family that was not in training, and looking at the wrong predictions one by one to see what the MPT answers "
     "that look like GPT have in common."
 ))
 
