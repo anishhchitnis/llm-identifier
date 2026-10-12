@@ -15,25 +15,25 @@ from reportlab.platypus import (
 ROOT = Path(__file__).resolve().parent.parent
 RESULTS = ROOT / "results"
 FIGURES = ROOT / "figures"
-FONTS = Path("/usr/share/fonts/truetype/dejavu")
+FONTS = Path("/usr/share/fonts/truetype/liberation")
 
-pdfmetrics.registerFont(TTFont("Body", str(FONTS / "DejaVuSans.ttf")))
-pdfmetrics.registerFont(TTFont("Bold", str(FONTS / "DejaVuSans-Bold.ttf")))
-pdfmetrics.registerFont(TTFont("Ital", str(FONTS / "DejaVuSans-Oblique.ttf")))
+pdfmetrics.registerFont(TTFont("Body", str(FONTS / "LiberationSerif-Regular.ttf")))
+pdfmetrics.registerFont(TTFont("Bold", str(FONTS / "LiberationSerif-Bold.ttf")))
+pdfmetrics.registerFont(TTFont("Ital", str(FONTS / "LiberationSerif-Italic.ttf")))
 pdfmetrics.registerFontFamily("Body", normal="Body", bold="Bold", italic="Ital", boldItalic="Bold")
 
 INK = colors.HexColor("#0b0b0b")
-INK2 = colors.HexColor("#52514e")
+INK2 = colors.HexColor("#333333")
 GRID = colors.HexColor("#c3c2b7")
 HEAD = colors.HexColor("#eceae2")
 
-body = ParagraphStyle("body", fontName="Body", fontSize=9.6, leading=14.2, textColor=INK, spaceAfter=7, alignment=TA_LEFT)
-h1 = ParagraphStyle("h1", parent=body, fontName="Bold", fontSize=13.5, leading=17, spaceBefore=12, spaceAfter=6, keepWithNext=1)
-h2 = ParagraphStyle("h2", parent=body, fontName="Bold", fontSize=10.8, leading=14, spaceBefore=8, spaceAfter=4, keepWithNext=1)
-title = ParagraphStyle("title", parent=body, fontName="Bold", fontSize=19, leading=24, spaceAfter=4)
-sub = ParagraphStyle("sub", parent=body, fontSize=10, leading=14, textColor=INK2, spaceAfter=2)
-cap = ParagraphStyle("cap", parent=body, fontSize=8.4, leading=11.5, textColor=INK2, spaceAfter=10)
-cell = ParagraphStyle("cell", parent=body, fontSize=8.4, leading=11, spaceAfter=0)
+body = ParagraphStyle("body", fontName="Body", fontSize=11, leading=15.5, textColor=INK, spaceAfter=7, alignment=TA_LEFT)
+h1 = ParagraphStyle("h1", parent=body, fontName="Bold", fontSize=14, leading=18, spaceBefore=12, spaceAfter=6, keepWithNext=1)
+h2 = ParagraphStyle("h2", parent=body, fontName="Bold", fontSize=12, leading=15, spaceBefore=8, spaceAfter=4, keepWithNext=1)
+title = ParagraphStyle("title", parent=body, fontName="Bold", fontSize=18, leading=22, spaceAfter=4)
+sub = ParagraphStyle("sub", parent=body, fontSize=11, leading=14, textColor=INK, spaceAfter=2)
+cap = ParagraphStyle("cap", parent=body, fontSize=9.5, leading=12, textColor=INK, spaceAfter=10)
+cell = ParagraphStyle("cell", parent=body, fontSize=9.5, leading=12, spaceAfter=0)
 cellb = ParagraphStyle("cellb", parent=cell, fontName="Bold")
 bullet = ParagraphStyle("bullet", parent=body, leftIndent=14, bulletIndent=3, spaceAfter=3)
 
@@ -111,27 +111,27 @@ def Paragraph(text, *args, **kwargs):
 
 story = []
 
-story.append(Paragraph("Which LLM wrote this text? Fingerprinting LLM families with a CNN and an RNN", title))
+story.append(Paragraph("LLM Fingerprinting: Which LLM Wrote This Text?", title))
 story.append(Paragraph("Anish Chitnis, Penn State. Individual project.", sub))
 story.append(Paragraph("Code and results: https://github.com/anishhchitnis/llm-identifier", sub))
 story.append(Spacer(1, 8))
 
 story.append(Paragraph("Summary", h1))
 story.append(p(
-    "I trained a CNN and a BiLSTM to guess which LLM family wrote an answer. The data has five families, "
-    "which are GPT, Llama 2, Bard, Falcon and MPT. When the models see only the answer text, they get about "
-    "0.74 (CNN) and 0.71 (BiLSTM) macro-F1 on a test set where random guessing gives 0.20. A simple TF-IDF and "
-    "logistic regression baseline did slightly better, at 0.77. When the models see only the prompt, they are "
-    "close to chance at 0.22. Adding the prompt to the answer did not help. I also found that the small gap "
-    "above chance for prompt-only models comes from a data quirk and not from real fingerprints in the prompt."
+    "In this project I trained a CNN and a BiLSTM to guess which LLM family wrote a piece of text. There are five "
+    "families, GPT, Llama 2, Bard, Falcon and MPT. When the models only see the answer, they get about "
+    "0.74 (CNN) and 0.71 (BiLSTM) macro-F1, and random guessing would get 0.20. A simple TF-IDF and "
+    "logistic regression baseline did a little better, at 0.77. When the models only see the prompt, they stay "
+    "close to chance at 0.22. Adding the prompt to the answer did not help. The score for the prompt only models is a "
+    "little above chance, and I found out this comes from a quirk in the data and not from a real fingerprint in the prompt."
 ))
 
 story.append(Paragraph("1. Problem definition and dataset", h1))
 story.append(Paragraph("1.1 The problem", h2))
 story.append(p(
-    "Many LLMs write fluent text, so it is hard to tell by eye who wrote what. The task here is to look at a "
-    "text and predict the LLM family that produced it. This is a 5 class classification problem. "
-    "I answer these two research questions."
+    "LLMs write text that sounds a lot alike, so it is hard to tell by reading who wrote it. In this project the model "
+    "gets a text and has to say which LLM family wrote it. That makes it a 5 class classification problem. "
+    "I worked on two research questions."
 ))
 story.extend(bl([
     "<b>RQ1.</b> Can we identify the LLM family from the output text alone?",
@@ -143,13 +143,12 @@ story.append(p(
     "I used the public UltraFeedback dataset from Hugging Face (openbmb/UltraFeedback, MIT license). It has "
     "63,967 prompts. Each prompt has four answers, written by four of 17 different models. Each row has a "
     "prompt, an answer, the name of the model that wrote it, and the name of the source dataset the prompt came from. "
-    "This fits the project format directly, because each row is (LLM name, input, output). "
-    "I did not need any API keys, so all data collection was free."
+    "This matches the format the project needs, because each row is (LLM name, input, output). "
+    "I did not need any API keys, so getting the data was free."
 ))
 story.append(p(
     "I grouped the models into families. GPT is GPT-4 and GPT-3.5-turbo. Llama 2 is the 7B, 13B and 70B chat models. "
-    "Bard, Falcon (40B instruct) and MPT (30B chat) each have one model. That gives five families, which is more "
-    "than the three the project asks for. I used the source dataset of each prompt as its domain. There are four "
+    "Bard, Falcon (40B instruct) and MPT (30B chat) each have one model. That gives five families, and the project asks for at least three. I used the source dataset of each prompt as its domain. There are four "
     "domains, which are Evol-Instruct, Flan, ShareGPT and UltraChat. The Flan source is split into several parts "
     "in the data, and I merged them into one domain."
 ))
@@ -159,11 +158,11 @@ story.extend(bl([
     "I kept answers between 20 and 8000 characters and dropped duplicates.",
     "I capped every family and domain pair at 1000 rows, so no single family or domain can dominate. "
     "Bard only has 701 Flan answers in the whole dataset, so that one pair has 701 rows.",
-    "Some answers name the model, for example \"As ChatGPT\" or \"I am OpenAI\". A classifier could just read the name. "
-    "I found these with a pattern match and removed them. This was about 1 percent of the rows, or 183 rows in total.",
+    "Some answers say the name of the model, like \"As ChatGPT\" or \"I am OpenAI\". A classifier could just read the name, which is cheating. "
+    "I found these with a pattern match and removed them. It was about 1 percent of the rows, 183 in total.",
     "I split the data into train, validation and test with an 80, 10, 10 split. The split is grouped by prompt text, "
-    "so the same prompt never appears in two splits. I checked that the overlap is zero. This matters because "
-    "answers to the same prompt are alike, and a random split would leak information.",
+    "so the same prompt never appears in two splits. I checked that the overlap is zero. I did this because "
+    "answers to the same prompt look alike, and a random split would let information leak from train to test.",
 ]))
 
 rows = [["Family", "Rows kept", "Mean words", "Median words", "Self-naming rows removed"]]
@@ -222,9 +221,9 @@ story.append(p(
 ))
 story.append(Paragraph("2.5 Baselines", h2))
 story.append(p(
-    "I added three reference points. The first is a majority class guess. The second is TF-IDF with word 1 and 2 grams plus "
+    "I also added three simple baselines to compare against. The first is a majority class guess. The second is TF-IDF with word 1 and 2 grams plus "
     "logistic regression. The third is TF-IDF with character 2 to 5 grams plus logistic regression. The character version "
-    "keeps case, punctuation and newlines. These baselines help show how much the neural networks add."
+    "keeps case, punctuation and newlines. They show how much the neural networks really add."
 ))
 
 story.append(Paragraph("3. Results", h1))
@@ -238,10 +237,10 @@ rows.append(["BiLSTM (3 seeds)", pm(summary.loc["lstm_output", "acc_mean"], summ
 story.append(table(rows, [3.1, 1.7, 1.7], "Table 4. RQ1 results on the test set with 384 tokens of the output. Random guessing among five classes is 0.20 accuracy."))
 story.append(fig("fig_models.png", "Figure 2. Test macro-F1 for each model. The grey line is chance at 0.20."))
 story.append(p(
-    "The answer to RQ1 is yes. Every real model is far above the 0.20 chance line. The CNN reaches 0.743 macro-F1 and the BiLSTM "
-    "reaches 0.708. The TF-IDF baselines are a bit better at 0.773 and 0.769. So on this data, the neural networks do not "
-    "beat a simple linear model on word counts. I think this is because the style signals are strong and local, "
-    "like the words \"Certainly\" or \"happy to help\", and a linear model can use those well. "
+    "The answer to RQ1 is yes. All of the real models are far above the 0.20 chance line. The CNN reaches 0.743 macro-F1 and the BiLSTM "
+    "reaches 0.708. The TF-IDF baselines are a bit better at 0.773 and 0.769. So on this data the neural networks did not "
+    "beat a simple linear model on word counts. My guess is that the style signals are strong and local, "
+    "like the words \"Certainly\" or \"happy to help\", and a linear model can use those fine. "
     "The CNN is 3.5 points ahead of the BiLSTM, but the BiLSTM changes a lot between seeds, as Table 5 shows, "
     "so I would not call that gap firm."
 ))
@@ -274,7 +273,7 @@ story.append(table(rows, [1.6, 2.2, 2.2], "Table 6. Test macro-F1 when only the 
 story.append(fig("fig_truncation.png", "Figure 5. Macro-F1 against tokens kept. The shaded band is one standard deviation. The grey line at the top is the best TF-IDF baseline."))
 story.append(p(
     "Even 16 tokens, which is about one short sentence, gives 0.567 for the CNN and 0.561 for the BiLSTM. That is almost three "
-    "times chance. This means the start of an answer already shows a lot of style, for example how a model begins with "
+    "times chance. So the start of an answer already shows a lot of style, like how a model begins with "
     "\"Sure\" or \"Certainly\". The score rises quickly until about 128 tokens and then flattens. The CNN stays slightly ahead of the "
     "BiLSTM at every length, but at 16 tokens they are about the same. The BiLSTM at 384 is lower than at 256, but its spread is large, so I would not "
     "read much into that drop."
@@ -295,16 +294,16 @@ story.extend(bl([
     "0.708 to 0.704. The TF-IDF model drops more, from 0.773 to 0.722. The prompt adds noise and nothing useful.",
 ]))
 story.append(p(
-    "So the answer to RQ2 is that the output carries almost all of the signal, and the input adds nothing."
+    "So for RQ2, the output has almost all of the signal and the input adds nothing."
 ))
 
 story.append(Paragraph("4.3 Why is input only a little above chance?", h2))
 story.append(p(
     "Input only scores 0.22, a little above 0.20. The BiLSTM input only model also finds 55 percent of Bard answers, but only 12 to 22 percent "
-    "of the answers from each other family. That looked strange, since the prompt should not say who answers. I looked for a cause."
+    "of the answers from each other family. That looked strange, since the prompt should not say who answers. I wanted to know why."
 ))
 story.append(p(
-    "The cause is a data quirk. Bard has only 701 Flan rows, while every other family has 1000 in each domain. "
+    "It turned out to be a quirk in the data. Bard has only 701 Flan rows, while every other family has 1000 in each domain. "
     "This means that a Flan prompt is a bit more likely to be from a non-Bard family overall. But Bard's Flan rows are not spread evenly over "
     "prompt lengths. I split the Flan prompts into four equal groups by length and measured the share of Bard rows in each. "
     "Bard's overall share of Flan rows is 15 percent, but it is 26 percent for the shortest prompts and only 4 percent for the second shortest."
@@ -324,7 +323,7 @@ story.append(p(
     "The chi-square test is strongly significant for Flan and not for the other three domains. A simple classifier that only knows the "
     "prompt length and the domain gets 0.216 macro-F1. That is the same as the CNN and BiLSTM input only results of 0.219 and 0.217. "
     "So the neural models are not finding any fingerprint in the prompt words. They found the Bard and Flan length pattern. "
-    "This is a good example of a shortcut, and it shows why checking the data matters as much as the model."
+    "This was a shortcut in the data. It shows that checking the data matters as much as building the model."
 ))
 
 story.append(Paragraph("4.4 What the baselines learned", h2))
@@ -352,26 +351,26 @@ story.extend(bl([
 
 story.append(Paragraph("6. Lessons and experience", h1))
 story.append(p(
-    "The biggest thing I learned is that the data work took more thinking than the models. Early on I thought "
-    "the hard part would be the CNN and the LSTM, but the CNN and the LSTM were short to write and trained without trouble. "
-    "Getting the data right took much longer. I had to find that the Flan prompts were under a different name, so my first "
-    "dataset only had three domains. I also had to find the self-naming answers where a model says its own name, since a "
-    "classifier would just read that and look smart for the wrong reason."
+    "The biggest thing I learned is that the data took more work than the models. At the start I thought "
+    "the CNN and the LSTM would be the hard part, but they were short to write and trained fine. "
+    "Getting the data right took a lot longer. My first dataset only had three domains, because the Flan prompts "
+    "had a different name than I expected and I missed them. I also had to find the answers where a model says its own name, because a "
+    "classifier could just read the name and look smart for the wrong reason."
 ))
 story.append(p(
-    "I also learned to split by prompt. At first it seemed fine to split rows at random, but then the same prompt would be in train and test "
-    "with different answers, and the scores would be too high. Grouping by prompt fixed that."
+    "I also learned why you split by prompt. A random split looks fine, but then the same prompt can be in train and in test "
+    "with different answers, and the scores come out too high. Grouping by prompt fixed that."
 ))
 story.append(p(
-    "A surprise was that the simple TF-IDF baseline beat my neural networks. At first I felt bad about that, but I think it is a useful result. "
-    "It told me that the style signal is mostly in which words and symbols appear, and not in long range structure. If I had skipped the baseline "
+    "It surprised me that the simple TF-IDF baseline beat my neural networks. I was a bit disappointed at first, but it is a useful result. "
+    "It tells me the style signal is mostly in which words and symbols show up, and not in long range structure. If I had skipped the baseline "
     "I would have thought 0.74 was great without knowing that a much simpler model gets 0.77."
 ))
 story.append(p(
-    "The input only result taught me the most. A score of 0.22 looked tiny, and I almost wrote it off as noise. But it was "
-    "consistent across both models, so I dug in. The real cause was that Bard has fewer Flan rows. It would have been easy to "
-    "claim that the prompt leaks a bit of information about the model. That would have been wrong. "
-    "Next time I will check simple explanations before I make a claim."
+    "The input only result taught me the most. A score of 0.22 is tiny and I almost called it noise. But it showed up in both models, "
+    "so I looked into it. The reason was that Bard has fewer Flan rows. It would have been easy to "
+    "say the prompt leaks a little about the model, and that would have been wrong. "
+    "Next time I will check the simple explanations before I make a claim."
 ))
 story.append(p(
     "On the practical side, next time I will save and download result files after every step. If I had more time, I would "
@@ -405,7 +404,7 @@ def footer(canvas, doc):
 
 
 doc = SimpleDocTemplate(
-    str(ROOT / "report.pdf"), pagesize=letter, leftMargin=0.9 * inch, rightMargin=0.9 * inch,
+    str(ROOT / "report.pdf"), pagesize=letter, leftMargin=1 * inch, rightMargin=1 * inch,
     topMargin=0.85 * inch, bottomMargin=0.9 * inch, title="LLM fingerprinting", author="Anish Chitnis",
 )
 doc.build(story, onFirstPage=footer, onLaterPages=footer)
