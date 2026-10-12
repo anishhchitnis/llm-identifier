@@ -122,7 +122,7 @@ story.append(p(
     "families, GPT, Llama 2, Bard, Falcon and MPT. When the models only see the answer, they get about "
     "0.74 (CNN) and 0.71 (BiLSTM) macro-F1, and random guessing would get 0.20. A simple TF-IDF and "
     "logistic regression baseline did a little better, at 0.77. When the models only see the prompt, they stay "
-    "close to chance at 0.22. Adding the prompt to the answer did not help. The score for the prompt only models is a "
+    "close to chance at 0.22. Adding the prompt to the answer did not help. I also tested the models on a domain they never saw in training. The score drops a little for three of the four domains and a lot for Flan. The score for the prompt only models is a "
     "little above chance, and I found out this comes from a quirk in the data and not from a real fingerprint in the prompt."
 ))
 
@@ -131,11 +131,12 @@ story.append(Paragraph("1.1 The problem", h2))
 story.append(p(
     "LLMs write text that sounds a lot alike, so it is hard to tell by reading who wrote it. In this project the model "
     "gets a text and has to say which LLM family wrote it. That makes it a 5 class classification problem. "
-    "I worked on two research questions."
+    "I worked on three research questions."
 ))
 story.extend(bl([
     "<b>RQ1.</b> Can we identify the LLM family from the output text alone?",
     "<b>RQ2.</b> How does the result change if the model sees only the input (the prompt), only the output, or both?",
+    "<b>RQ3.</b> Do the fingerprints carry over to a type of task the model never saw in training?",
 ]))
 
 story.append(Paragraph("1.2 Where the data comes from", h2))
@@ -211,7 +212,7 @@ story.append(table([
     ["Gradient clipping", "1.0"],
     ["Max epochs", "20"],
     ["Early stopping", "Stop when validation macro-F1 does not improve for 3 epochs, keep the best epoch"],
-    ["Seeds", "3 seeds for every neural result. I report mean and standard deviation"],
+    ["Seeds", "3 seeds for the CNN and for most BiLSTM results. The BiLSTM runs for RQ3 use 2 seeds. I report mean and standard deviation"],
     ["Hardware", "One T4 GPU on Google Colab"],
 ], [1.6, 4.9], "Table 3. Training settings, the same for the CNN and the BiLSTM."))
 story.append(p(
@@ -339,6 +340,42 @@ story.append(p(
     "That is still a valid fingerprint, but it may be easy to hide. It also means these results may not carry over to other prompts."
 ))
 
+story.append(Paragraph("4.5 RQ3, do fingerprints carry over to a new domain?", h2))
+story.append(p(
+    "For this I used the four domains in the data as four types of task. They are Evol Instruct, Flan, ShareGPT and UltraChat. "
+    "For each domain I trained on the other three and tested on the one I left out. I used the output only models with 384 tokens. "
+    "To compare fairly, I also scored the normal models (trained on all four domains) on the test rows of that same domain. "
+    "The CNN used 3 seeds and the BiLSTM used 2 seeds."
+))
+rq3 = pd.read_csv(RESULTS / "rq3_table.csv")
+dn = {"evol_instruct": "Evol Instruct", "flan": "Flan", "sharegpt": "ShareGPT", "ultrachat": "UltraChat"}
+rows = [["Model", "Test domain", "Seen domain macro F1", "Held out macro F1", "Drop"]]
+for _, r_ in rq3.iterrows():
+    rows.append([r_["model"], dn[r_["domain"]], pm(r_["in_domain_f1"], r_["in_domain_f1_std"]), pm(r_["held_out_f1"], r_["held_out_f1_std"]), f3(r_["drop"])])
+story.append(table(rows, [1.0, 1.3, 1.6, 1.6, 0.8], "Table 10. Macro F1 when the test domain was in the training data compared with when it was left out."))
+story.append(fig("fig_rq3_f1.png", "Figure 8. Macro F1 on each domain when it was seen in training (blue) and when it was held out (orange). The grey line is chance at 0.20."))
+story.append(fig("fig_rq3_recall.png", "Figure 9. Recall for each family on the held out domain. Each column is a separate model that never saw that domain."))
+story.append(p(
+    "<b>Does performance drop on an unseen domain?</b> Yes, but for three of the four domains the drop is small. "
+    "For Evol Instruct, ShareGPT and UltraChat the CNN loses 4 to 7 points of macro F1 and the BiLSTM loses 5 to 8 points. "
+    "Flan is different. The CNN drops from 0.707 to 0.529 and the BiLSTM from 0.714 to 0.513. That is a loss of about 18 to 20 points. "
+    "Even then both models are well above the 0.20 chance level. Part of every drop may come from the held out models having less "
+    "training data, because they train on three domains and not four. So the true drop from the domain change alone is probably a bit smaller than what I show."
+))
+story.append(p(
+    "<b>Are some families easier to find across domains?</b> Bard is the most stable. Its recall stays between 0.78 and 0.88 for the CNN and "
+    "between 0.87 and 0.93 for the BiLSTM on every held out domain, even Flan. Llama 2 is also fairly steady, between 0.63 and 0.84. "
+    "GPT is the least stable. Its recall is 0.55 to 0.83 on the three chat style domains but only 0.14 for the CNN and 0.13 for the BiLSTM on Flan. "
+    "MPT is weak everywhere, and the BiLSTM only finds 23 to 36 percent of MPT answers in every domain."
+))
+story.append(p(
+    "<b>Is the classifier learning a general fingerprint or task specific patterns?</b> I think it is both. The scores on the three chat style domains "
+    "stay close to the seen domain scores, so most of what the models learn is a style that works across tasks. "
+    "The Flan result shows that some of it is tied to the task. When GPT answers from Flan were tested, the CNN labeled 43 percent of them as Falcon "
+    "and 37 percent as MPT, and only 14 percent as GPT. Falcon writes short answers, so one possible reason is that the Flan answers are short and the model reads short as Falcon. "
+    "I did not measure the answer length by domain, so this is a guess and not something I proved."
+))
+
 story.append(Paragraph("5. Limits of this work", h1))
 story.extend(bl([
     "All text comes from one dataset, UltraFeedback. The results may not hold for other prompts or for newer models.",
@@ -347,6 +384,8 @@ story.extend(bl([
     "In UltraFeedback each prompt gets four of the 17 models, so not every family answered every prompt.",
     "Bard has fewer rows than the other families because of how much Bard data exists in the source.",
     "I used 3 seeds, so the standard deviations are rough. I did not do a heavy search for hyperparameters.",
+    "For RQ3, the held out models trained on about three quarters of the data, and the BiLSTM used only 2 seeds. "
+    "The four domains are also not fully separate tasks. They are different sources of prompts, and some of them mix several kinds of tasks.",
 ]))
 
 story.append(Paragraph("6. Lessons and experience", h1))
@@ -373,6 +412,7 @@ story.append(p(
     "Next time I will check the simple explanations before I make a claim."
 ))
 story.append(p(
+    "The held out domain test also taught me something. A model that scores 0.74 on average can fall to 0.53 on one domain, so one average score hides a lot. "
     "On the practical side, next time I will save and download result files after every step. If I had more time, I would "
     "test the models on a family that was not in training, and look at the wrong predictions one by one to see what the MPT answers "
     "that look like GPT have in common."
@@ -380,9 +420,9 @@ story.append(p(
 
 story.append(Paragraph("Reproducing this", h1))
 story.append(p(
-    "All code is in the repo under src. The file run_all.sh runs the full pipeline, which is dataset building, preprocessing, baselines, "
-    "the CNN and BiLSTM runs, the truncation runs, the RQ2 runs and the diagnostics. It needs a GPU and takes about an hour and a half on a "
-    "Colab T4. The file src/make_figures.py draws the figures from the files in the results folder."
+    "All code is in the repo under src. The scripts run in this order, build_dataset.py, preprocess.py, baselines.py, "
+    "train.py for the CNN and BiLSTM runs, and rq2_diagnostics.py. The neural runs need a GPU. I used a Colab T4. "
+    "The file make_figures.py draws the figures from the files in the results folder."
 ))
 
 

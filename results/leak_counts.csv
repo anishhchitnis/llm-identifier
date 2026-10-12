@@ -1,6 +1,0 @@
-llm_name,self_naming_rows,rate
-bard,38,0.0103
-falcon,31,0.0078
-gpt,52,0.013
-llama2,34,0.0085
-mpt,28,0.007

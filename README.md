@@ -10,6 +10,7 @@ Each row is (LLM name, input, output). A model reads the text and predicts one o
 
 * RQ1. Can we find the family from the output alone?
 * RQ2. What changes if the model sees only the input, only the output, or both?
+* RQ3. Do the fingerprints carry over to a domain the model never saw in training?
 
 ## Data
 
@@ -36,6 +37,13 @@ RQ2, test macro F1 for output only, input only, and input plus output.
 * CNN: 0.743, 0.219, 0.732
 * BiLSTM: 0.708, 0.217, 0.704
 
+RQ3, test macro F1 when the domain was seen in training and when it was held out (CNN with 3 seeds, BiLSTM with 2 seeds).
+
+* Evol Instruct: CNN 0.777 and 0.722, BiLSTM 0.702 and 0.625
+* Flan: CNN 0.707 and 0.529, BiLSTM 0.714 and 0.513
+* ShareGPT: CNN 0.761 and 0.687, BiLSTM 0.694 and 0.641
+* UltraChat: CNN 0.745 and 0.704, BiLSTM 0.722 and 0.648
+
 The report also has the truncation study and the analysis of why input only is a little above chance.
 
 ## How to run
@@ -44,9 +52,10 @@ A GPU is needed for the neural networks. I used a Colab T4.
 
 1. Install the packages listed in requirements.txt.
 2. Run these scripts in order with python. They are src/build_dataset.py, src/preprocess.py, src/baselines.py, src/train.py and src/rq2_diagnostics.py. The train script takes the options model, mode, seeds, max_len and holdout_domain, which you can see at the top of the file.
-3. Run src/summarize.py to collect the results into one table.
-4. Run src/make_figures.py to draw the figures.
-5. Run src/make_report.py to build report.pdf.
+3. For RQ3, run src/train.py with the holdout_domain option set to each of evol_instruct, flan, sharegpt and ultrachat, then run src/rq3_analysis.py.
+4. Run src/summarize.py to collect the results into one table.
+5. Run src/make_figures.py to draw the figures.
+6. Run src/make_report.py to build report.pdf.
 
 ## Files
 
@@ -58,6 +67,7 @@ A GPU is needed for the neural networks. I used a Colab T4.
 * src/train.py training and evaluation
 * src/summarize.py collects the results into one table
 * src/rq2_diagnostics.py checks on the input only result
+* src/rq3_analysis.py tables and figures for RQ3
 * src/make_figures.py draws the figures
 * src/make_report.py builds report.pdf
 * results has the result tables
