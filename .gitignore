@@ -1,0 +1,4 @@
+data/*.parquet
+logs/
+*.zip
+__pycache__/
