@@ -1,0 +1,6 @@
+llm_name,evol_instruct,flan,sharegpt,ultrachat
+bard,1000,701,1000,1000
+falcon,1000,1000,1000,1000
+gpt,1000,1000,1000,1000
+llama2,1000,1000,1000,1000
+mpt,1000,1000,1000,1000

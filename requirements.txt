@@ -1,0 +1,9 @@
+datasets
+pandas
+pyarrow
+numpy
+scikit-learn
+torch
+matplotlib
+reportlab
+pillow
