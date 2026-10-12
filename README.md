@@ -40,12 +40,13 @@ The report also has the truncation study and the analysis of why input only is a
 
 ## How to run
 
-A GPU is needed for the neural networks. It takes about an hour and a half on a Colab T4.
+A GPU is needed for the neural networks. I used a Colab T4.
 
 1. Install the packages listed in requirements.txt.
-2. Run the script run_all.sh with bash. It builds the data, trains everything and writes the result tables into the results folder.
-3. Run src/make_figures.py with python to draw the figures.
-4. Run src/make_report.py with python to build report.pdf.
+2. Run these scripts in order with python. They are src/build_dataset.py, src/preprocess.py, src/baselines.py, src/train.py and src/rq2_diagnostics.py. The train script takes the options model, mode, seeds, max_len and holdout_domain, which you can see at the top of the file.
+3. Run src/summarize.py to collect the results into one table.
+4. Run src/make_figures.py to draw the figures.
+5. Run src/make_report.py to build report.pdf.
 
 ## Files
 
@@ -59,6 +60,5 @@ A GPU is needed for the neural networks. It takes about an hour and a half on a 
 * src/rq2_diagnostics.py checks on the input only result
 * src/make_figures.py draws the figures
 * src/make_report.py builds report.pdf
-* run_all.sh runs the whole pipeline
 * results has the result tables
 * figures has the figures used in the report
